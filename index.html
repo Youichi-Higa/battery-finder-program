@@ -30,7 +30,7 @@
       </div>
       <div class="mb-3">
         <p class="m-0">Step3: Input accessory power consumption</p>
-        <select id="powerConsumption"></select>
+        <input type="number" id="powerConsumption" value="55" min="0" max="100" />
       </div>
       <div>
         <p class="m-0">Step4: Choose your battery</p>
@@ -118,6 +118,74 @@
           endVoltage: 12,
         },
       ];
+
+      class Battery {
+        constructor(batteryName, capacityAh, voltage, maxDraw, endVoltage) {
+          this.batteryName = batteryName;
+          this.capacityAh = capacityAh;
+          this.voltage = voltage;
+          this.maxDraw = maxDraw;
+          this.endVoltage = endVoltage;
+        }
+
+        maxWatt() {
+          return this.capacityAh * this.voltage;
+        }
+
+        endWatt() {
+          return this.maxDraw * this.endVoltage;
+        }
+
+        maxUseHour(sumWatt) {
+          return (this.maxWatt() / sumWatt).toFixed(1);
+        }
+
+        createBatteryEle(sumWatt) {
+          const batteryDivEle = document.createElement('div');
+          batteryDivEle.classList.add(
+            'w-100',
+            'bg-light',
+            'border',
+            'border-secondary',
+            'd-flex',
+            'flex-row',
+            'justify-content-between',
+            'align-items-center'
+          );
+
+          const batteryP = document.createElement('p');
+          batteryP.classList.add('p-2', 'm-0');
+          const batteryS = document.createElement('strong');
+          batteryS.innerHTML = this.batteryName;
+          batteryP.append(batteryS);
+
+          const maxUseHourP = document.createElement('p');
+          maxUseHourP.classList.add('p-2', 'm-0');
+          maxUseHourP.innerHTML = `Estimate ${this.maxUseHour(sumWatt)} hours`;
+
+          batteryDivEle.append(batteryP, maxUseHourP);
+
+          return batteryDivEle;
+        }
+      }
+
+      const batterySort = battery.sort(function (a, b) {
+        if (a.batteryName > b.batteryName) return 1;
+        else return -1;
+      });
+
+      const batteryObjects = [];
+      batterySort.forEach((battery) => {
+        batteryObjects.push(
+          new Battery(
+            battery.batteryName,
+            battery.capacityAh,
+            battery.voltage,
+            battery.maxDraw,
+            battery.endVoltage
+          )
+        );
+      });
 
       const camera = [
         {
@@ -243,7 +311,26 @@
         cameraObjects.forEach((cameraObj, index) => {
           modelSelectEle.append(cameraObj.createModelSelectEle(e.target.value, index));
         });
+        renderBatteryList();
       });
+
+      modelSelectEle.addEventListener('change', renderBatteryList);
+
+      const inputWattEle = document.getElementById('powerConsumption');
+      inputWattEle.addEventListener('change', renderBatteryList);
+
+      const batteryTopDiv = document.getElementById('batteryList');
+      renderBatteryList();
+
+      function renderBatteryList() {
+        batteryTopDiv.innerHTML = '';
+        const sumWatt =
+          cameraObjects[modelSelectEle.value].powerConsumptionWh + parseInt(inputWattEle.value);
+        batteryObjects.forEach((batteryObj) => {
+          if (sumWatt < batteryObj.endWatt())
+            batteryTopDiv.append(batteryObj.createBatteryEle(sumWatt));
+        });
+      }
     </script>
   </body>
 </html>
