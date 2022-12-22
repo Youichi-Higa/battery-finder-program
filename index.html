@@ -198,10 +198,17 @@
       ];
 
       class Camera {
-        constructor(brand, cameras, powerConsumptionWh) {
+        constructor(brand, model, powerConsumptionWh) {
           this.brand = brand;
-          this.cameras = cameras;
+          this.model = model;
           this.powerConsumptionWh = powerConsumptionWh;
+        }
+
+        createModelSelectEle(brand, index) {
+          const optionEle = document.createElement('option');
+          optionEle.value = index;
+          optionEle.innerHTML = this.model;
+          return this.brand === brand ? optionEle : null;
         }
       }
 
@@ -211,8 +218,8 @@
       });
 
       const cameraObjects = [];
-      cameraSort.forEach((el) => {
-        cameraObjects.push(new Camera(el.brand, el.model, el.powerConsumptionWh));
+      cameraSort.forEach((camera) => {
+        cameraObjects.push(new Camera(camera.brand, camera.model, camera.powerConsumptionWh));
       });
 
       const brandsDic = {};
@@ -224,6 +231,18 @@
       const brandSelectEle = document.getElementById('brand');
       brands.forEach((brand) => {
         brandSelectEle.innerHTML += `<option value="${brand}">${brand}</option>`;
+      });
+
+      const modelSelectEle = document.getElementById('model');
+      cameraObjects.forEach((cameraObj, index) => {
+        modelSelectEle.append(cameraObj.createModelSelectEle(brands[0], index));
+      });
+
+      brandSelectEle.addEventListener('change', (e) => {
+        modelSelectEle.innerHTML = '';
+        cameraObjects.forEach((cameraObj, index) => {
+          modelSelectEle.append(cameraObj.createModelSelectEle(e.target.value, index));
+        });
       });
     </script>
   </body>
